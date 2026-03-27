@@ -1,20 +1,12 @@
 const PROXY_URL = "https://proxy-sc.vercel.app/api/plays";
-
-const chartYears = [
-  { year: "2016", value: 0, active: false },
-  { year: "2017", value: 0, active: false },
-  { year: "2018", value: 0, active: false },
-  { year: "2019", value: 0, active: false },
-  { year: "2020", value: 0, active: false },
-  { year: "2021", value: 0, active: false },
-  { year: "2022", value: 0, active: false },
-  { year: "2023", value: 140000, active: true },
-  { year: "2024", value: 560000, active: true },
-  { year: "2025", value: 890000, active: true },
-  { year: "2026", value: 110000, active: true }
-];
+const STATS_URL = "./stats.json";
 
 let previousCount = null;
+let statsData = null;
+
+function full(num) {
+  return Number(num).toLocaleString("en-US");
+}
 
 function compact(num) {
   return new Intl.NumberFormat("en", {
@@ -23,17 +15,45 @@ function compact(num) {
   }).format(num);
 }
 
-function full(num) {
-  return num.toLocaleString("en-US");
+function estimateExtraMetrics(totalPlays) {
+  return {
+    likes: Math.round(totalPlays * 0.0108),
+    comments: Math.round(totalPlays * 0.00021),
+    reposts: Math.round(totalPlays * 0.00022),
+    downloads: 1
+  };
 }
 
-function renderChart(data) {
+function buildYAxis(maxValue) {
+  const yAxis = document.getElementById("yAxis");
+  yAxis.innerHTML = "";
+
+  const steps = 5;
+  for (let i = steps; i >= 0; i -= 1) {
+    const value = Math.round((maxValue / steps) * i);
+    const label = document.createElement("span");
+    label.textContent = i === 0 ? "0" : compact(value).toUpperCase();
+    yAxis.appendChild(label);
+  }
+}
+
+function renderChart(series, subtitle) {
   const chartArea = document.getElementById("chartArea");
+  const chartSubtitle = document.getElementById("chartSubtitle");
+
   chartArea.innerHTML = "";
+  chartSubtitle.textContent = subtitle;
 
-  const maxValue = 1000000;
+  chartArea.style.gridTemplateColumns = `repeat(${series.length}, 1fr)`;
 
-  data.forEach((item) => {
+  const maxSeriesValue = Math.max(...series.map(item => item.plays), 1);
+  const visualMax = Math.ceil(maxSeriesValue * 1.15);
+
+  buildYAxis(visualMax);
+
+  const maxBarHeight = 100;
+
+  series.forEach((item, index) => {
     const group = document.createElement("div");
     group.className = "bar-group";
 
@@ -41,15 +61,15 @@ function renderChart(data) {
     col.className = "bar-col";
 
     const bar = document.createElement("div");
-    bar.className = item.active ? "bar active" : "bar";
+    bar.className = index >= Math.max(series.length - 4, 0) ? "bar active" : "bar";
 
-    const heightPercent = Math.max((item.value / maxValue) * 100, item.value > 0 ? 4 : 0);
-    bar.style.height = `${heightPercent}%`;
-    bar.title = `${item.year}: ${full(item.value)}`;
+    const h = Math.max((item.plays / visualMax) * maxBarHeight, item.plays > 0 ? 4 : 0);
+    bar.style.height = `${h}%`;
+    bar.title = `${item.label}: ${full(item.plays)}`;
 
     const label = document.createElement("div");
     label.className = "bar-label";
-    label.textContent = item.year;
+    label.textContent = item.label;
 
     col.appendChild(bar);
     col.appendChild(label);
@@ -58,94 +78,103 @@ function renderChart(data) {
   });
 }
 
-function updateFakeStatsFromPlays(totalPlays) {
-  const likes = Math.round(totalPlays * 0.0108);
-  const comments = Math.round(totalPlays * 0.00021);
-  const reposts = Math.round(totalPlays * 0.00022);
-  const downloads = 1;
-
-  document.getElementById("likesValue").textContent = full(likes);
-  document.getElementById("commentsValue").textContent = full(comments);
-  document.getElementById("repostsValue").textContent = full(reposts);
-  document.getElementById("downloadsValue").textContent = full(downloads);
+async function loadStatsJson() {
+  const res = await fetch(STATS_URL, { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error(`stats.json HTTP ${res.status}`);
+  }
+  return res.json();
 }
 
-async function loadDashboard() {
-  const playsValue = document.getElementById("playsValue");
-  const headlinePlays = document.getElementById("headlinePlays");
-  const trackTitle = document.getElementById("trackTitle");
-  const lastUpdate = document.getElementById("lastUpdate");
+async function loadProxyData() {
+  const res = await fetch(PROXY_URL, { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error(`proxy HTTP ${res.status}`);
+  }
+  return res.json();
+}
 
+function applyMetrics(totalPlays) {
+  const extra = estimateExtraMetrics(totalPlays);
+
+  document.getElementById("playsValue").textContent = full(totalPlays);
+  document.getElementById("headlinePlays").textContent = full(totalPlays);
+  document.getElementById("likesValue").textContent = full(extra.likes);
+  document.getElementById("commentsValue").textContent = full(extra.comments);
+  document.getElementById("repostsValue").textContent = full(extra.reposts);
+  document.getElementById("downloadsValue").textContent = full(extra.downloads);
+}
+
+function applyGrowth(totalPlays) {
+  const growthText = document.getElementById("growthText");
+
+  if (previousCount === null) {
+    growthText.textContent = "(+0)";
+    previousCount = totalPlays;
+    return;
+  }
+
+  const diff = totalPlays - previousCount;
+
+  if (diff > 0) {
+    growthText.textContent = `(+${full(diff)})`;
+  } else if (diff < 0) {
+    growthText.textContent = `(${full(diff)})`;
+  } else {
+    growthText.textContent = "(0)";
+  }
+
+  previousCount = totalPlays;
+}
+
+function renderSelectedRange(rangeKey) {
+  if (!statsData || !statsData.history || !statsData.history[rangeKey]) return;
+
+  const subtitleMap = {
+    yearly: "All-time yearly view",
+    monthly: "This year by month",
+    daily: "This month by day"
+  };
+
+  renderChart(statsData.history[rangeKey], subtitleMap[rangeKey] || "");
+}
+
+async function initDashboard() {
   try {
-    const res = await fetch(PROXY_URL, { cache: "no-store" });
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
+    const [stats, proxy] = await Promise.all([
+      loadStatsJson(),
+      loadProxyData()
+    ]);
 
-    const data = await res.json();
+    statsData = stats;
 
-    if (typeof data.playback_count !== "number") {
+    const totalPlays = proxy.playback_count;
+    if (typeof totalPlays !== "number") {
       throw new Error("playback_count not found");
     }
 
-    const totalPlays = data.playback_count;
+    document.getElementById("sinceYear").textContent = stats.sinceYear || 2016;
+    document.getElementById("trackTitle").textContent = proxy.title || "Unknown track";
+    document.getElementById("lastUpdate").textContent =
+      `Last update: ${new Date().toLocaleTimeString()}`;
 
-    playsValue.textContent = full(totalPlays);
-    headlinePlays.textContent = full(totalPlays);
-    trackTitle.textContent = data.title || "Unknown track";
-    lastUpdate.textContent = `Last update: ${new Date().toLocaleTimeString()}`;
+    applyMetrics(totalPlays);
+    applyGrowth(totalPlays);
 
-    updateFakeStatsFromPlays(totalPlays);
-
-    if (previousCount !== null) {
-      const diff = totalPlays - previousCount;
-      if (diff > 0) {
-        document.querySelector(".growth").textContent = `(+${full(diff)})`;
-      } else if (diff < 0) {
-        document.querySelector(".growth").textContent = `(${full(diff)})`;
-      } else {
-        document.querySelector(".growth").textContent = "(0)";
-      }
-    }
-
-    previousCount = totalPlays;
+    const selectedRange = document.getElementById("rangeSelect").value;
+    renderSelectedRange(selectedRange);
   } catch (err) {
     console.error("Dashboard error:", err);
-    playsValue.textContent = "Error";
-    headlinePlays.textContent = "Error";
-    trackTitle.textContent = err.message;
-    lastUpdate.textContent = "Update failed";
+    document.getElementById("headlinePlays").textContent = "Error";
+    document.getElementById("playsValue").textContent = "Error";
+    document.getElementById("trackTitle").textContent = err.message;
+    document.getElementById("lastUpdate").textContent = "Update failed";
   }
 }
 
 document.getElementById("rangeSelect").addEventListener("change", (e) => {
-  const value = e.target.value;
-
-  if (value === "all") {
-    renderChart(chartYears);
-    return;
-  }
-
-  if (value === "year") {
-    renderChart(
-      chartYears.map((item) => ({
-        ...item,
-        value: item.year === "2026" ? item.value : 0
-      }))
-    );
-    return;
-  }
-
-  if (value === "month") {
-    renderChart(
-      chartYears.map((item) => ({
-        ...item,
-        value: item.year === "2026" ? Math.round(item.value * 0.2) : 0
-      }))
-    );
-  }
+  renderSelectedRange(e.target.value);
 });
 
-renderChart(chartYears);
-loadDashboard();
-setInterval(loadDashboard, 30000);
+initDashboard();
+setInterval(initDashboard, 30000);
