@@ -1,3 +1,14 @@
+const PROXY_URL = "https://proxy-sc.vercel.app/api/plays";
+
+let previousCount = null;
+
+function formatNumber(num) {
+  return new Intl.NumberFormat("en", {
+    notation: "compact",
+    maximumFractionDigits: 1
+  }).format(num);
+}
+
 async function getTrackData() {
   const playsEl = document.getElementById("plays");
   const changeEl = document.getElementById("change");
@@ -6,8 +17,10 @@ async function getTrackData() {
   try {
     statusEl.textContent = "Updating...";
 
-    const res = await fetch("https:/proxy-sc.vercel.app/api/plays");
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const res = await fetch(PROXY_URL);
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
 
     const track = await res.json();
 
@@ -17,6 +30,7 @@ async function getTrackData() {
 
     const currentCount = track.playback_count;
     playsEl.textContent = formatNumber(currentCount);
+    playsEl.setAttribute("data-full", currentCount.toLocaleString());
 
     if (previousCount !== null) {
       const diff = currentCount - previousCount;
@@ -49,3 +63,6 @@ async function getTrackData() {
     statusEl.textContent = "Update failed";
   }
 }
+
+setInterval(getTrackData, 30000);
+getTrackData();
