@@ -1,17 +1,17 @@
 const API_URL = "https://proxy-sc.vercel.app/api/dashboard";
 
-let previousCount = null;
 let dashboardData = null;
+let previousCount = null;
 
 function full(num) {
-  return Number(num).toLocaleString("en-US");
+  return Number(num || 0).toLocaleString("en-US");
 }
 
 function compact(num) {
   return new Intl.NumberFormat("en", {
     notation: "compact",
     maximumFractionDigits: 1
-  }).format(num);
+  }).format(Number(num || 0));
 }
 
 function buildYAxis(maxValue) {
@@ -21,22 +21,22 @@ function buildYAxis(maxValue) {
   const steps = 5;
   for (let i = steps; i >= 0; i -= 1) {
     const value = Math.round((maxValue / steps) * i);
-    const label = document.createElement("span");
-    label.textContent = i === 0 ? "0" : compact(value).toUpperCase();
-    yAxis.appendChild(label);
+    const el = document.createElement("span");
+    el.textContent = i === 0 ? "0" : compact(value).toUpperCase();
+    yAxis.appendChild(el);
   }
 }
 
-function renderChart(series, subtitle) {
+function renderChart(series) {
   const chartArea = document.getElementById("chartArea");
-  const chartSubtitle = document.getElementById("chartSubtitle");
-
   chartArea.innerHTML = "";
-  chartSubtitle.textContent = subtitle;
+
+  if (!Array.isArray(series) || !series.length) return;
+
   chartArea.style.gridTemplateColumns = `repeat(${series.length}, 1fr)`;
 
-  const maxSeriesValue = Math.max(...series.map(item => item.plays), 1);
-  const visualMax = Math.ceil(maxSeriesValue * 1.15);
+  const maxSeriesValue = Math.max(...series.map(item => Number(item.plays || 0)), 1);
+  const visualMax = Math.ceil(maxSeriesValue * 1.12);
 
   buildYAxis(visualMax);
 
@@ -48,11 +48,14 @@ function renderChart(series, subtitle) {
     col.className = "bar-col";
 
     const bar = document.createElement("div");
-    bar.className = index >= Math.max(series.length - 4, 0) ? "bar active" : "bar";
+    const isActive = index >= Math.max(series.length - 4, 0);
+    bar.className = isActive ? "bar active" : "bar";
 
-    const h = Math.max((item.plays / visualMax) * 100, item.plays > 0 ? 4 : 0);
-    bar.style.height = `${h}%`;
-    bar.title = `${item.label}: ${full(item.plays)}`;
+    const value = Number(item.plays || 0);
+    const height = Math.max((value / visualMax) * 100, value > 0 ? 4 : 0);
+
+    bar.style.height = `${height}%`;
+    bar.title = `${item.label}: ${full(value)}`;
 
     const label = document.createElement("div");
     label.className = "bar-label";
@@ -65,19 +68,82 @@ function renderChart(series, subtitle) {
   });
 }
 
-function renderSelectedRange(rangeKey) {
-  if (!dashboardData?.history?.[rangeKey]) return;
+function renderTracks(tracks) {
+  const trackList = document.getElementById("trackList");
+  trackList.innerHTML = "";
 
-  const subtitleMap = {
-    yearly: "All-time yearly view",
-    monthly: "This year by month",
-    daily: "This month by day"
-  };
+  if (!Array.isArray(tracks) || !tracks.length) {
+    trackList.innerHTML = `<div class="empty-state">No tracks available</div>`;
+    return;
+  }
 
-  renderChart(dashboardData.history[rangeKey], subtitleMap[rangeKey] || "");
+  tracks.slice(0, 6).forEach((track, index) => {
+    const item = document.createElement("div");
+    item.className = "track-item";
+
+    const cover = document.createElement("div");
+    cover.className = "track-cover";
+
+    if (track.artwork_url) {
+      const img = document.createElement("img");
+      img.src = track.artwork_url;
+      img.alt = track.title || "Track artwork";
+      cover.appendChild(img);
+    } else {
+      cover.textContent = `${index + 1}`;
+    }
+
+    const meta = document.createElement("div");
+    meta.className = "track-meta";
+
+    const title = document.createElement("div");
+    title.className = "track-name";
+    title.textContent = track.title || "Untitled";
+
+    const stats = document.createElement("div");
+    stats.className = "track-stats";
+    stats.innerHTML = `
+      <span class="track-stat-plays">▶ ${full(track.playback_count)} plays</span>
+      <span>♥ ${full(track.likes_count)}</span>
+      <span>💬 ${full(track.comment_count)}</span>
+    `;
+
+    meta.appendChild(title);
+    meta.appendChild(stats);
+
+    item.appendChild(cover);
+    item.appendChild(meta);
+    trackList.appendChild(item);
+  });
 }
 
-async function initDashboard() {
+function renderSelectedRange(rangeKey) {
+  if (!dashboardData?.history?.[rangeKey]) return;
+  renderChart(dashboardData.history[rangeKey]);
+}
+
+function updateGrowth(totalPlays) {
+  const growthText = document.getElementById("growthText");
+
+  if (previousCount === null) {
+    growthText.textContent = "(+0)";
+    previousCount = totalPlays;
+    return;
+  }
+
+  const diff = totalPlays - previousCount;
+  if (diff > 0) {
+    growthText.textContent = `(+${full(diff)})`;
+  } else if (diff < 0) {
+    growthText.textContent = `(${full(diff)})`;
+  } else {
+    growthText.textContent = "(+0)";
+  }
+
+  previousCount = totalPlays;
+}
+
+async function loadDashboard() {
   try {
     const res = await fetch(API_URL, { cache: "no-store" });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -85,36 +151,44 @@ async function initDashboard() {
     const data = await res.json();
     dashboardData = data;
 
-    const totalPlays = data.playback_count;
-
-    document.getElementById("sinceYear").textContent = data.sinceYear || 2016;
-    document.getElementById("trackTitle").textContent = data.trackTitle || "Unknown track";
-    document.getElementById("lastUpdate").textContent =
-      `Last update: ${new Date(data.updatedAt || Date.now()).toLocaleTimeString()}`;
+    const totalPlays = Number(data.playback_count || 0);
+    const likes = Number(data.likes || 0);
+    const comments = Number(data.comments || 0);
+    const reposts = Number(data.reposts || 0);
+    const downloads = Number(data.downloads || 0);
+    const trackCount = Number(data.trackCount || 0);
 
     document.getElementById("headlinePlays").textContent = full(totalPlays);
+    document.getElementById("sinceYear").textContent = data.sinceYear || 2016;
+
     document.getElementById("playsValue").textContent = full(totalPlays);
-    document.getElementById("likesValue").textContent = full(data.likes || 0);
-    document.getElementById("commentsValue").textContent = full(data.comments || 0);
-    document.getElementById("repostsValue").textContent = full(data.reposts || 0);
-    document.getElementById("downloadsValue").textContent = full(data.downloads || 0);
+    document.getElementById("likesValue").textContent = full(likes);
+    document.getElementById("commentsValue").textContent = full(comments);
+    document.getElementById("repostsValue").textContent = full(reposts);
+    document.getElementById("downloadsValue").textContent = full(downloads);
+    document.getElementById("trackCountValue").textContent = full(trackCount);
 
-    const growthText = document.getElementById("growthText");
-    if (previousCount === null) {
-      growthText.textContent = "(+0)";
-    } else {
-      const diff = totalPlays - previousCount;
-      growthText.textContent = diff > 0 ? `(+${full(diff)})` : diff < 0 ? `(${full(diff)})` : "(0)";
-    }
-    previousCount = totalPlays;
+    document.getElementById("playsChipValue").textContent = `${full(totalPlays)} plays`;
+    document.getElementById("likesChipValue").textContent = `${full(likes)} likes`;
+    document.getElementById("commentsChipValue").textContent = `${full(comments)} comments`;
+    document.getElementById("repostsChipValue").textContent = `${full(reposts)} reposts`;
+    document.getElementById("downloadsChipValue").textContent = `${full(downloads)} download${downloads === 1 ? "" : "s"}`;
 
-    renderSelectedRange(document.getElementById("rangeSelect").value);
+    document.getElementById("artistName").textContent = data.artist || "AREKKUZZERA";
+    document.getElementById("trackTitle").textContent = data.trackTitle || "All Tracks";
+
+    const updatedAt = data.updatedAt ? new Date(data.updatedAt) : new Date();
+    document.getElementById("lastUpdate").textContent = updatedAt.toLocaleTimeString();
+
+    updateGrowth(totalPlays);
+    renderTracks(data.tracks || []);
+
+    const rangeValue = document.getElementById("rangeSelect").value;
+    renderSelectedRange(rangeValue);
   } catch (err) {
-    console.error(err);
+    console.error("Dashboard error:", err);
     document.getElementById("headlinePlays").textContent = "Error";
-    document.getElementById("playsValue").textContent = "Error";
     document.getElementById("trackTitle").textContent = err.message;
-    document.getElementById("lastUpdate").textContent = "Update failed";
   }
 }
 
@@ -122,5 +196,5 @@ document.getElementById("rangeSelect").addEventListener("change", (e) => {
   renderSelectedRange(e.target.value);
 });
 
-initDashboard();
-setInterval(initDashboard, 30000);
+loadDashboard();
+setInterval(loadDashboard, 30000);
