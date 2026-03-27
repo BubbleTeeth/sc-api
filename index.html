@@ -3,26 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SoundCloud Insights</title>
+  <title>Insights</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <main class="page">
+  <main class="wrap">
     <header class="topbar">
-      <div class="brand-wrap">
-        <h1 class="page-title">Insights</h1>
+      <div class="topbar-left">
+        <h1 class="title">Insights</h1>
 
-        <nav class="tabs">
+        <div class="tabs">
           <button class="tab active">SoundCloud</button>
           <button class="tab">All Platforms</button>
           <button class="tab">
             Fans
-            <span class="tab-badge">NEW</span>
+            <span class="badge">NEW</span>
           </button>
-        </nav>
+        </div>
       </div>
 
-      <div class="top-actions">
+      <div class="topbar-right">
         <select id="rangeSelect" class="range-select">
           <option value="yearly">All time</option>
           <option value="monthly">This year</option>
@@ -32,67 +32,66 @@
     </header>
 
     <section class="hero">
-      <div class="hero-title-row">
-        <h2 class="hero-title">
-          <span id="headlinePlays">0</span> plays since <span id="sinceYear">2016</span>
-          <span id="growthText" class="growth">(+0)</span>
-        </h2>
-      </div>
+      <h2 class="hero-title">
+        <span id="headlinePlays">0</span> plays since <span id="sinceYear">2016</span>
+        <span class="growth" id="growthText">(+0)</span>
+      </h2>
 
-      <div class="hero-meta-row">
-        <div class="chip chip-light">
-          <span class="chip-icon">▶</span>
+      <div class="hero-metrics">
+        <div class="metric-pill metric-pill-main">
+          <span class="metric-pill-icon">▶</span>
           <span id="playsChipValue">0 plays</span>
         </div>
 
-        <div class="chip">
-          <span class="chip-icon">♥</span>
+        <div class="metric-pill">
+          <span class="metric-pill-icon">♥</span>
           <span id="likesChipValue">0 likes</span>
         </div>
 
-        <div class="chip">
-          <span class="chip-icon">💬</span>
+        <div class="metric-pill">
+          <span class="metric-pill-icon">💬</span>
           <span id="commentsChipValue">0 comments</span>
         </div>
 
-        <div class="chip">
-          <span class="chip-icon">↻</span>
+        <div class="metric-pill">
+          <span class="metric-pill-icon">↻</span>
           <span id="repostsChipValue">0 reposts</span>
         </div>
 
-        <div class="chip">
-          <span class="chip-icon">↓</span>
+        <div class="metric-pill">
+          <span class="metric-pill-icon">↓</span>
           <span id="downloadsChipValue">0 downloads</span>
         </div>
 
-        <div class="hero-side-meta">
-          <span class="meta-muted">Data updates every 30 sec</span>
-          <span class="meta-strong" id="periodLabel">2016 - Present</span>
+        <div class="hero-meta">
+          <span class="hero-meta-muted">Data updates every 30 sec</span>
+          <span class="hero-meta-strong" id="periodLabel">2016 - Present</span>
         </div>
       </div>
     </section>
 
-    <section class="chart-block">
-      <div class="chart-grid">
+    <section class="chart-section">
+      <div class="chart-shell">
         <div class="y-axis" id="yAxis"></div>
         <div class="bars" id="chartArea"></div>
       </div>
     </section>
 
-    <section class="panels">
+    <section class="bottom-grid">
       <article class="panel">
-        <div class="panel-head">
+        <div class="panel-header">
           <div>
             <h3 class="panel-title">Top tracks</h3>
             <div class="panel-subtitle">All time</div>
           </div>
+          <button class="panel-link">See all</button>
         </div>
 
         <div class="track-list" id="trackList"></div>
       </article>
 
-      <article class="panel panel-side">
-        <div class="panel-head">
+      <article class="panel">
+        <div class="panel-header">
           <div>
             <h3 class="panel-title">Overview</h3>
             <div class="panel-subtitle">Current totals</div>
@@ -100,55 +99,55 @@
         </div>
 
         <div class="overview-grid">
-          <div class="overview-card accent">
-            <span class="overview-label">Plays</span>
-            <span class="overview-value" id="playsValue">0</span>
+          <div class="overview-card overview-card-accent">
+            <div class="overview-label">Plays</div>
+            <div class="overview-value" id="playsValue">0</div>
           </div>
 
           <div class="overview-card">
-            <span class="overview-label">Likes</span>
-            <span class="overview-value" id="likesValue">0</span>
+            <div class="overview-label">Likes</div>
+            <div class="overview-value" id="likesValue">0</div>
           </div>
 
           <div class="overview-card">
-            <span class="overview-label">Comments</span>
-            <span class="overview-value" id="commentsValue">0</span>
+            <div class="overview-label">Comments</div>
+            <div class="overview-value" id="commentsValue">0</div>
           </div>
 
           <div class="overview-card">
-            <span class="overview-label">Reposts</span>
-            <span class="overview-value" id="repostsValue">0</span>
+            <div class="overview-label">Reposts</div>
+            <div class="overview-value" id="repostsValue">0</div>
           </div>
 
           <div class="overview-card">
-            <span class="overview-label">Downloads</span>
-            <span class="overview-value" id="downloadsValue">0</span>
+            <div class="overview-label">Downloads</div>
+            <div class="overview-value" id="downloadsValue">0</div>
           </div>
 
           <div class="overview-card">
-            <span class="overview-label">Tracks</span>
-            <span class="overview-value" id="trackCountValue">0</span>
+            <div class="overview-label">Tracks</div>
+            <div class="overview-value" id="trackCountValue">0</div>
           </div>
         </div>
 
-        <div class="status-box">
-          <div class="status-row">
-            <span class="status-label">Artist</span>
-            <span class="status-value" id="artistName">AREKKUZZERA</span>
+        <div class="info-list">
+          <div class="info-row">
+            <span class="info-key">Artist</span>
+            <span class="info-value" id="artistName">AREKKUZZERA</span>
           </div>
-          <div class="status-row">
-            <span class="status-label">Source</span>
-            <span class="status-value" id="trackTitle">All Tracks</span>
+          <div class="info-row">
+            <span class="info-key">Source</span>
+            <span class="info-value" id="trackTitle">All Tracks</span>
           </div>
-          <div class="status-row">
-            <span class="status-label">Updated</span>
-            <span class="status-value" id="lastUpdate">Starting...</span>
+          <div class="info-row">
+            <span class="info-key">Updated</span>
+            <span class="info-value" id="lastUpdate">Starting...</span>
           </div>
         </div>
       </article>
     </section>
   </main>
 
-  <script src="app.js?v=7"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>

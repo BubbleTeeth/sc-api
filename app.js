@@ -48,12 +48,10 @@ function renderChart(series) {
     col.className = "bar-col";
 
     const bar = document.createElement("div");
-    const isActive = index >= Math.max(series.length - 4, 0);
-    bar.className = isActive ? "bar active" : "bar";
+    bar.className = index >= Math.max(series.length - 4, 0) ? "bar active" : "bar";
 
     const value = Number(item.plays || 0);
     const height = Math.max((value / visualMax) * 100, value > 0 ? 4 : 0);
-
     bar.style.height = `${height}%`;
     bar.title = `${item.label}: ${full(value)}`;
 
@@ -87,14 +85,13 @@ function renderTracks(tracks) {
     if (track.artwork_url) {
       const img = document.createElement("img");
       img.src = track.artwork_url;
-      img.alt = track.title || "Track artwork";
+      img.alt = track.title || "Track cover";
       cover.appendChild(img);
     } else {
-      cover.textContent = `${index + 1}`;
+      cover.textContent = String(index + 1);
     }
 
     const meta = document.createElement("div");
-    meta.className = "track-meta";
 
     const title = document.createElement("div");
     title.className = "track-name";
@@ -103,7 +100,7 @@ function renderTracks(tracks) {
     const stats = document.createElement("div");
     stats.className = "track-stats";
     stats.innerHTML = `
-      <span class="track-stat-plays">▶ ${full(track.playback_count)} plays</span>
+      <span>▶ ${full(track.playback_count)} plays</span>
       <span>♥ ${full(track.likes_count)}</span>
       <span>💬 ${full(track.comment_count)}</span>
     `;
@@ -182,9 +179,7 @@ async function loadDashboard() {
 
     updateGrowth(totalPlays);
     renderTracks(data.tracks || []);
-
-    const rangeValue = document.getElementById("rangeSelect").value;
-    renderSelectedRange(rangeValue);
+    renderSelectedRange(document.getElementById("rangeSelect").value);
   } catch (err) {
     console.error("Dashboard error:", err);
     document.getElementById("headlinePlays").textContent = "Error";
