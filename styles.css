@@ -195,7 +195,7 @@ body {
   display: grid;
   grid-template-columns: 56px 1fr;
   gap: 16px;
-  min-height: 330px;
+  min-height: 420px;
 }
 
 .y-axis {
@@ -213,7 +213,7 @@ body {
   display: grid;
   align-items: end;
   gap: 22px;
-  min-height: 330px;
+  min-height: 420px;
   padding: 8px 8px 0;
 }
 
@@ -468,4 +468,26 @@ body {
   .overview-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.topbar-left,
+.topbar-right {
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar-right {
+  align-items: flex-end;
+}
+
+.hero-title span,
+.title,
+.panel-title,
+.overview-value {
+  text-rendering: geometricPrecision;
+}
+
+button,
+select {
+  font: inherit;
 }
