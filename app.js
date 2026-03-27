@@ -22,11 +22,20 @@ async function getTrackData() {
       `https://api-v2.soundcloud.com/resolve?url=${encodeURIComponent(TRACK_URL)}&client_id=${CLIENT_ID}`
     );
 
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    console.log("status:", res.status);
+    console.log("raw response:", text);
+
+    let track;
+    try {
+      track = JSON.parse(text);
+    } catch {
+      throw new Error("Response is not JSON");
     }
 
-    const track = await res.json();
+    if (!res.ok) {
+      throw new Error(track.error || `HTTP ${res.status}`);
+    }
 
     if (typeof track.playback_count !== "number") {
       throw new Error("playback_count not found");
@@ -34,36 +43,22 @@ async function getTrackData() {
 
     const currentCount = track.playback_count;
     playsEl.textContent = formatNumber(currentCount);
-    playsEl.setAttribute("data-full", currentCount.toLocaleString());
 
     if (previousCount !== null) {
       const diff = currentCount - previousCount;
-
-      if (diff > 0) {
-        changeEl.textContent = `+${diff.toLocaleString()}`;
-        changeEl.className = "change up";
-        playsEl.classList.remove("pulse");
-        void playsEl.offsetWidth;
-        playsEl.classList.add("pulse");
-      } else if (diff < 0) {
-        changeEl.textContent = `${diff.toLocaleString()}`;
-        changeEl.className = "change down";
-      } else {
-        changeEl.textContent = "No change";
-        changeEl.className = "change";
-      }
+      changeEl.textContent = diff > 0 ? `+${diff}` : diff < 0 ? `${diff}` : "No change";
     } else {
       changeEl.textContent = "First load";
-      changeEl.className = "change";
     }
 
     previousCount = currentCount;
     statusEl.textContent = `Last update: ${new Date().toLocaleTimeString()}`;
   } catch (err) {
-    console.error(err);
-    statusEl.textContent = "Update failed";
-    changeEl.textContent = "Error";
+    console.error("SoundCloud error:", err);
+    playsEl.textContent = "Error";
+    changeEl.textContent = err.message;
     changeEl.className = "change down";
+    statusEl.textContent = "Update failed";
   }
 }
 
