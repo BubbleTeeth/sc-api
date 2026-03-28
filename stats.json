@@ -1,11 +1,186 @@
 {
   "sinceYear": 2016,
-  "lastTotal": 0,
+  "lastTotal": 1735689,
   "lastTrackTitle": "",
-  "snapshots": [],
+  "snapshots": [
+    {
+      "key": "2026-Mar-28",
+      "year": "2026",
+      "month": "Mar",
+      "day": "28",
+      "total": 1735689
+    }
+  ],
   "history": {
-    "yearly": [],
-    "monthly": [],
-    "daily": []
+    "yearly": [
+      {
+        "label": "2026",
+        "plays": 0
+      }
+    ],
+    "monthly": [
+      {
+        "label": "Jan",
+        "plays": 0
+      },
+      {
+        "label": "Feb",
+        "plays": 0
+      },
+      {
+        "label": "Mar",
+        "plays": 0
+      },
+      {
+        "label": "Apr",
+        "plays": 0
+      },
+      {
+        "label": "May",
+        "plays": 0
+      },
+      {
+        "label": "Jun",
+        "plays": 0
+      },
+      {
+        "label": "Jul",
+        "plays": 0
+      },
+      {
+        "label": "Aug",
+        "plays": 0
+      },
+      {
+        "label": "Sep",
+        "plays": 0
+      },
+      {
+        "label": "Oct",
+        "plays": 0
+      },
+      {
+        "label": "Nov",
+        "plays": 0
+      },
+      {
+        "label": "Dec",
+        "plays": 0
+      }
+    ],
+    "daily": [
+      {
+        "label": "1",
+        "plays": 0
+      },
+      {
+        "label": "2",
+        "plays": 0
+      },
+      {
+        "label": "3",
+        "plays": 0
+      },
+      {
+        "label": "4",
+        "plays": 0
+      },
+      {
+        "label": "5",
+        "plays": 0
+      },
+      {
+        "label": "6",
+        "plays": 0
+      },
+      {
+        "label": "7",
+        "plays": 0
+      },
+      {
+        "label": "8",
+        "plays": 0
+      },
+      {
+        "label": "9",
+        "plays": 0
+      },
+      {
+        "label": "10",
+        "plays": 0
+      },
+      {
+        "label": "11",
+        "plays": 0
+      },
+      {
+        "label": "12",
+        "plays": 0
+      },
+      {
+        "label": "13",
+        "plays": 0
+      },
+      {
+        "label": "14",
+        "plays": 0
+      },
+      {
+        "label": "15",
+        "plays": 0
+      },
+      {
+        "label": "16",
+        "plays": 0
+      },
+      {
+        "label": "17",
+        "plays": 0
+      },
+      {
+        "label": "18",
+        "plays": 0
+      },
+      {
+        "label": "19",
+        "plays": 0
+      },
+      {
+        "label": "20",
+        "plays": 0
+      },
+      {
+        "label": "21",
+        "plays": 0
+      },
+      {
+        "label": "22",
+        "plays": 0
+      },
+      {
+        "label": "23",
+        "plays": 0
+      },
+      {
+        "label": "24",
+        "plays": 0
+      },
+      {
+        "label": "25",
+        "plays": 0
+      },
+      {
+        "label": "26",
+        "plays": 0
+      },
+      {
+        "label": "27",
+        "plays": 0
+      },
+      {
+        "label": "28",
+        "plays": 0
+      }
+    ]
   }
 }
