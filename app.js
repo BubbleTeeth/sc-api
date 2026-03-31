@@ -350,15 +350,28 @@ function buildYearRange(series, sinceYear, referenceDate) {
 }
 
 function normalizeHistory(history, referenceDate, sinceYear = referenceDate.getFullYear(), historyMeta = {}) {
-  const isSameMonthlyYear = String(historyMeta.monthlyYear || "") === String(referenceDate.getFullYear());
+  const hasMonthlyMeta = hasOwn(historyMeta, "monthlyYear");
+  const hasDailyMeta = hasOwn(historyMeta, "dailyYear") || hasOwn(historyMeta, "dailyMonth");
+
+  const isSameMonthlyYear =
+    !hasMonthlyMeta ||
+    String(historyMeta.monthlyYear) === String(referenceDate.getFullYear());
+
   const isSameDailyPeriod =
-    String(historyMeta.dailyYear || "") === String(referenceDate.getFullYear()) &&
-    String(historyMeta.dailyMonth || "") === MONTHS[referenceDate.getMonth()];
+    !hasDailyMeta ||
+    (
+      String(historyMeta.dailyYear) === String(referenceDate.getFullYear()) &&
+      (
+        String(historyMeta.dailyMonth) === String(referenceDate.getMonth() + 1) ||
+        String(historyMeta.dailyMonth) === String(MONTHS[referenceDate.getMonth()]) ||
+        String(historyMeta.dailyMonth).padStart(2, "0") === String(referenceDate.getMonth() + 1).padStart(2, "0")
+      )
+    );
 
   return {
     yearly: buildYearRange(history?.yearly, sinceYear, referenceDate),
-    monthly: getMonthlySeries(isSameMonthlyYear ? history?.monthly : []),
-    daily: getDailySeries(isSameDailyPeriod ? history?.daily : [], referenceDate)
+    monthly: getMonthlySeries(isSameMonthlyYear ? history?.monthly : history?.monthly || []),
+    daily: getDailySeries(isSameDailyPeriod ? history?.daily : history?.daily || [], referenceDate)
   };
 }
 
