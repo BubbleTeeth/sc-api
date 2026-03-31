@@ -337,24 +337,47 @@ function enhanceHistoryWithLiveDelta(history, lastSnapshotTotal, currentTotal, r
   };
 }
 
-function normalizeHistory(history, referenceDate) {
+function buildYearRange(series, sinceYear, referenceDate) {
+  const normalized = getYearlySeries(series);
+  const currentYear = referenceDate.getFullYear();
+  const startYear = Math.min(toNumber(sinceYear) || currentYear, currentYear);
+  const map = new Map(normalized.map((item) => [item.label, item]));
+
+  return Array.from({ length: currentYear - startYear + 1 }, (_, index) => {
+    const label = String(startYear + index);
+    return map.get(label) || { label, plays: 0 };
+  });
+}
+
+function normalizeHistory(history, referenceDate, sinceYear = referenceDate.getFullYear(), historyMeta = {}) {
+  const isSameMonthlyYear = String(historyMeta.monthlyYear || "") === String(referenceDate.getFullYear());
+  const isSameDailyPeriod =
+    String(historyMeta.dailyYear || "") === String(referenceDate.getFullYear()) &&
+    String(historyMeta.dailyMonth || "") === MONTHS[referenceDate.getMonth()];
+
   return {
-    yearly: getYearlySeries(history?.yearly),
-    monthly: getMonthlySeries(history?.monthly),
-    daily: getDailySeries(history?.daily, referenceDate)
+    yearly: buildYearRange(history?.yearly, sinceYear, referenceDate),
+    monthly: getMonthlySeries(isSameMonthlyYear ? history?.monthly : []),
+    daily: getDailySeries(isSameDailyPeriod ? history?.daily : [], referenceDate)
   };
 }
 
 function mergeDashboardData(liveData, statsData) {
   const referenceDate = getSafeDate(liveData?.updatedAt || statsData?.updatedAt);
   const historySource = statsData?.history ? "local" : liveData?.history ? "remote" : "none";
-  const history = normalizeHistory(statsData?.history || liveData?.history, referenceDate);
+  const sourceSinceYear = toNumber(liveData?.sinceYear || statsData?.sinceYear) || 2016;
+  const history = normalizeHistory(
+    statsData?.history || liveData?.history,
+    referenceDate,
+    sourceSinceYear,
+    statsData?.historyMeta || liveData?.historyMeta
+  );
 
   const merged = {
     history,
     historySource,
     referenceDate,
-    sinceYear: toNumber(liveData?.sinceYear || statsData?.sinceYear) || 2016,
+    sinceYear: sourceSinceYear,
     playback_count: toNumber(
       liveData?.playback_count ??
       statsData?.playback_count ??

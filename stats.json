@@ -219,5 +219,12 @@
   "playback_count": 1739312,
   "trackTitle": "All Tracks",
   "artist": "AREKKUZZERA",
-  "tracks": []
+  "tracks": [],
+  "historyMeta": {
+    "yearlyStart": "2026",
+    "yearlyEnd": "2026",
+    "monthlyYear": "2026",
+    "dailyYear": "2026",
+    "dailyMonth": "Mar"
+  }
 }

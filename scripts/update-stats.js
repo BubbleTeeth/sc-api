@@ -157,7 +157,14 @@ function buildHistory(snapshots, nowParts) {
   return {
     yearly,
     monthly,
-    daily
+    daily,
+    meta: {
+      yearlyStart: yearly.length ? yearly[0].label : nowParts.year,
+      yearlyEnd: yearly.length ? yearly[yearly.length - 1].label : nowParts.year,
+      monthlyYear: nowParts.year,
+      dailyYear: nowParts.year,
+      dailyMonth: nowParts.month
+    }
   };
 }
 
@@ -221,7 +228,12 @@ async function main() {
 
   stats.sinceYear = toNumber(stats.sinceYear) || (snapshots[0] ? Number(snapshots[0].year) : Number(nowParts.year));
   stats.snapshots = snapshots;
-  stats.history = history;
+  stats.history = {
+    yearly: history.yearly,
+    monthly: history.monthly,
+    daily: history.daily
+  };
+  stats.historyMeta = history.meta;
   stats.lastTotal = currentTotal;
   stats.playback_count = currentTotal;
   stats.likes = toNumber(apiData.likes);
