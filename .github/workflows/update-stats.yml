@@ -2,25 +2,19 @@ name: Update SoundCloud Stats
 
 on:
   schedule:
-    # BUG FIX #1: cron "0 0 * * *" — запуск ровно в 00:00 UTC.
-    # GitHub Actions не гарантирует точное время: при высокой нагрузке
-    # задержка может составлять 10-30 минут. Для daily-снапшота это
-    # не критично, но лучше документировать поведение.
-    # Также добавлен второй запуск в 12:00 UTC — промежуточный снапшот
-    # для более точных daily-данных (обновляет existing snapshot того же дня).
     - cron: "0 0 * * *"
-    - cron: "0 12 * * *"
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: update-soundcloud-stats
+  cancel-in-progress: true
+
 jobs:
   update-stats:
     runs-on: ubuntu-latest
-    # BUG FIX #2: не было таймаута на уровне job — при зависании
-    # fetch или git-операций job мог занимать максимальные 6 часов
-    # и блокировать лимит Actions.
     timeout-minutes: 5
 
     steps:
@@ -32,17 +26,8 @@ jobs:
         with:
           node-version: "20"
 
-      # BUG FIX #3: не было retry-логики — при временной недоступности
-      # прокси скрипт падал и снапшот за день терялся.
-      # Добавлен retry через встроенный механизм GitHub Actions.
       - name: Run updater
-        id: run_updater
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 2
-          max_attempts: 3
-          retry_wait_seconds: 30
-          command: node scripts/update-stats.js
+        run: node scripts/update-stats.js
 
       - name: Commit and push changes
         run: |
@@ -54,11 +39,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
-            # BUG FIX #4: git push без --no-verify и без обработки race condition.
-            # Если два параллельных запуска (schedule + workflow_dispatch) попытаются
-            # запушить одновременно — один упадёт с non-zero exit code.
-            # Добавлен pull --rebase перед push.
-            git pull --rebase origin HEAD
-            git commit -m "chore: update stats.json [skip ci]"
+            git commit -m "update stats.json"
             git push
           fi

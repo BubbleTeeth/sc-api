@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
   <title>Insights</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -13,12 +14,13 @@
         <h1 class="title">Insights</h1>
 
         <div class="tabs">
-          <button class="tab active">SoundCloud</button>
+          <button class="tab active" type="button">SoundCloud</button>
         </div>
       </div>
 
       <div class="topbar-right">
-        <select id="rangeSelect" class="range-select">
+        <label class="sr-only" for="rangeSelect">Select time range</label>
+        <select id="rangeSelect" class="range-select" aria-label="Select time range">
           <option value="yearly">All time</option>
           <option value="monthly">This year</option>
           <option value="daily">This month</option>
@@ -28,14 +30,14 @@
 
     <section class="hero">
       <h2 class="hero-title">
-        <span id="headlinePlays">0</span> plays since <span id="sinceYear">2016</span>
-        <span class="growth" id="growthText">(+0)</span>
+        <span id="headlinePlays" aria-live="polite">0</span> plays since <span id="sinceYear">2016</span>
+        <span class="growth" id="growthText" data-change="neutral">(+0 today)</span>
       </h2>
 
-      <div class="hero-metrics">
+      <div class="hero-metrics" aria-live="polite">
         <div class="metric-pill metric-pill-main">
           <span class="metric-pill-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M5 3l14 9-14 9V3z"/>
             </svg>
           </span>
@@ -44,7 +46,7 @@
 
         <div class="metric-pill">
           <span class="metric-pill-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M20.8 4.6c-1.5-1.6-4-1.6-5.5 0L12 8l-3.3-3.4c-1.5-1.6-4-1.6-5.5 0-1.6 1.7-1.6 4.4 0 6.1L12 21l8.8-10.3c1.6-1.7 1.6-4.4 0-6.1z"/>
             </svg>
           </span>
@@ -53,7 +55,7 @@
 
         <div class="metric-pill">
           <span class="metric-pill-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V5a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
             </svg>
           </span>
@@ -62,7 +64,7 @@
 
         <div class="metric-pill">
           <span class="metric-pill-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M17 1l4 4-4 4"/>
               <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
               <path d="M7 23l-4-4 4-4"/>
@@ -74,7 +76,7 @@
 
         <div class="metric-pill">
           <span class="metric-pill-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M12 3v12"/>
               <path d="M7 10l5 5 5-5"/>
               <path d="M5 21h14"/>
@@ -84,17 +86,17 @@
         </div>
       </div>
 
-        <div class="hero-meta">
-          <span class="hero-meta-muted">Data updates every 30 sec</span>
-          <span class="hero-meta-strong" id="periodLabel">2016 - Present</span>
-        </div>
+      <div class="hero-meta">
+        <span class="hero-meta-muted">Data refreshes every 30 sec</span>
+        <span class="hero-meta-strong" id="periodLabel">2016 - Present</span>
+        <span class="status-note" id="statusNote" data-tone="loading" aria-live="polite">Loading data…</span>
       </div>
     </section>
 
     <section class="chart-section">
       <div class="chart-shell">
-        <div class="y-axis" id="yAxis"></div>
-        <div class="bars" id="chartArea"></div>
+        <div class="y-axis" id="yAxis" aria-hidden="true"></div>
+        <div class="bars" id="chartArea" role="img" aria-label="Plays chart"></div>
       </div>
     </section>
 
@@ -103,9 +105,8 @@
         <div class="panel-header">
           <div>
             <h3 class="panel-title">Top tracks</h3>
-            <div class="panel-subtitle">All time</div>
+            <div class="panel-subtitle">Live top 6</div>
           </div>
-          <button class="panel-link">See all</button>
         </div>
 
         <div class="track-list" id="trackList"></div>
@@ -119,7 +120,7 @@
           </div>
         </div>
 
-        <div class="overview-grid">
+        <div class="overview-grid" aria-live="polite">
           <div class="overview-card overview-card-accent">
             <div class="overview-label">Plays</div>
             <div class="overview-value" id="playsValue">0</div>
@@ -169,6 +170,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=10"></script>
+  <script src="app.js?v=11"></script>
 </body>
 </html>
