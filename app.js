@@ -363,28 +363,130 @@ function normalizeHistory(history, referenceDate, sinceYear = referenceDate.getF
       String(historyMeta.dailyYear) === String(referenceDate.getFullYear()) &&
       (
         String(historyMeta.dailyMonth) === String(referenceDate.getMonth() + 1) ||
-        String(historyMeta.dailyMonth) === String(MONTHS[referenceDate.getMonth()]) ||
+        String(historyMeta.dailyMonth) === MONTHS[referenceDate.getMonth()] ||
         String(historyMeta.dailyMonth).padStart(2, "0") === String(referenceDate.getMonth() + 1).padStart(2, "0")
       )
     );
 
   return {
     yearly: buildYearRange(history?.yearly, sinceYear, referenceDate),
-    monthly: getMonthlySeries(isSameMonthlyYear ? history?.monthly : history?.monthly || []),
-    daily: getDailySeries(isSameDailyPeriod ? history?.daily : history?.daily || [], referenceDate)
+    monthly: getMonthlySeries(isSameMonthlyYear ? history?.monthly : []),
+    daily: getDailySeries(isSameDailyPeriod ? history?.daily : [], referenceDate)
   };
+}
+
+function countNonZeroSeriesItems(series) {
+  return (Array.isArray(series) ? series : []).filter((item) => toNumber(item?.plays) > 0).length;
+}
+
+function getHistoryScore(history) {
+  if (!history) {
+    return -1;
+  }
+
+  const yearly = Array.isArray(history.yearly) ? history.yearly : [];
+  const monthly = Array.isArray(history.monthly) ? history.monthly : [];
+  const daily = Array.isArray(history.daily) ? history.daily : [];
+
+  return (
+    yearly.length +
+    monthly.length +
+    daily.length +
+    countNonZeroSeriesItems(yearly) * 10 +
+    countNonZeroSeriesItems(monthly) * 10 +
+    countNonZeroSeriesItems(daily) * 10
+  );
+}
+
+function pickBestHistory(liveHistory, statsHistory) {
+  const liveScore = getHistoryScore(liveHistory);
+  const statsScore = getHistoryScore(statsHistory);
+
+  return liveScore >= statsScore ? liveHistory : statsHistory;
 }
 
 function mergeDashboardData(liveData, statsData) {
   const referenceDate = getSafeDate(liveData?.updatedAt || statsData?.updatedAt);
-  const historySource = statsData?.history ? "local" : liveData?.history ? "remote" : "none";
   const sourceSinceYear = toNumber(liveData?.sinceYear || statsData?.sinceYear) || 2016;
+
+  const bestHistory = pickBestHistory(liveData?.history, statsData?.history);
+  const bestHistoryMeta =
+    bestHistory === liveData?.history
+      ? (liveData?.historyMeta || {})
+      : (statsData?.historyMeta || {});
+
+  const historySource =
+    bestHistory === liveData?.history
+      ? "remote"
+      : bestHistory === statsData?.history
+        ? "local"
+        : "none";
+
   const history = normalizeHistory(
-    statsData?.history || liveData?.history,
+    bestHistory,
     referenceDate,
     sourceSinceYear,
-    statsData?.historyMeta || liveData?.historyMeta
+    bestHistoryMeta
   );
+
+  const merged = {
+    history,
+    historySource,
+    referenceDate,
+    sinceYear: sourceSinceYear,
+    playback_count: toNumber(
+      liveData?.playback_count ??
+      statsData?.playback_count ??
+      statsData?.lastTotal
+    ),
+    likes: toNumber(liveData?.likes ?? statsData?.likes),
+    comments: toNumber(liveData?.comments ?? statsData?.comments),
+    reposts: toNumber(liveData?.reposts ?? statsData?.reposts),
+    downloads: toNumber(liveData?.downloads ?? statsData?.downloads),
+    trackCount: toNumber(liveData?.trackCount ?? statsData?.trackCount),
+    artist: liveData?.artist || statsData?.artist || "AREKKUZZERA",
+    trackTitle:
+      liveData?.trackTitle ||
+      liveData?.title ||
+      statsData?.trackTitle ||
+      statsData?.lastTrackTitle ||
+      "All Tracks",
+    tracks: Array.isArray(liveData?.tracks)
+      ? liveData.tracks
+      : Array.isArray(statsData?.tracks)
+        ? statsData.tracks
+        : [],
+    updatedAt: liveData?.updatedAt || statsData?.updatedAt || null,
+    lastTotal: toNumber(
+      statsData?.lastTotal ??
+      statsData?.playback_count ??
+      liveData?.lastTotal ??
+      liveData?.playback_count
+    )
+  };
+
+  const hasSnapshotBaseline =
+    hasOwn(statsData, "lastTotal") ||
+    hasOwn(statsData, "playback_count") ||
+    hasOwn(liveData, "lastTotal");
+
+  merged.hasSnapshotBaseline = hasSnapshotBaseline;
+  merged.liveDelta = 0;
+
+  if (hasSnapshotBaseline) {
+    const enhanced = enhanceHistoryWithLiveDelta(
+      merged.history,
+      merged.lastTotal,
+      merged.playback_count,
+      referenceDate
+    );
+
+    merged.history = enhanced.history;
+    merged.liveDelta = enhanced.liveDelta;
+  }
+
+  return merged;
+}
 
   const merged = {
     history,
