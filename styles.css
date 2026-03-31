@@ -520,3 +520,7 @@ select {
     grid-template-columns: 1fr;
   }
 }
+.metric-pill-icon {
+  display: flex;
+  align-items: center;
+}
