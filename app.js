@@ -1,4 +1,4 @@
-const API_URL = "https://proxy-sc.vercel.app/api/dashboard";
+const API_URL = "https://proxy-sc-kappa.vercel.app/api/dashboard";
 const STATS_URL = "stats.json";
 const REFRESH_INTERVAL_MS = 30000;
 const REQUEST_TIMEOUT_MS = 12000;
